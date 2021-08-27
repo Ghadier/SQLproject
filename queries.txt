@@ -1,0 +1,99 @@
+SQL PROJECT
+
+Question 1
+
+We want to understand more about the movies that families are
+watching. The following categories are considered family movies:
+Animation, Children, Classics, Comedy, Family and Music.
+
+SELECT f.title film_title, c.name category_name,
+COUNT(*) rental_count
+FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON c.category_id = fc.category_id
+JOIN inventory i
+ON i.film_id = f.film_id
+JOIN rental r
+ON r.inventory_id = i.inventory_id
+WHERE c.name IN (SELECT c.name
+		FROM category c
+		WHERE c.name IN ('Animation','Children','Classics','Comedy',
+						 'Family','Music'))
+GROUP BY f.title, c.name
+ORDER BY c.name, f.title;
+---
+
+Question 2
+
+Now we need to know how the length of rental duration of these
+family-friendly movies compares to the duration that all movies
+are rented for. Can you provide a table with the movie titles
+and divide them into 4 levels (first_quarter, second_quarter,
+third_quarter, and final_quarter) based on the quartiles
+(25%, 50%, 75%) of the rental duration for movies across all
+categories? Make sure to also indicate the category that these
+family-friendly movies fall into.
+
+SELECT f.title, c.name AS name, f.rental_duration,
+NTILE(4) OVER (ORDER BY f.rental_duration) AS standard_quartile
+FROM film f
+JOIN film_category fc
+ON fc.film_id = f.film_id
+JOIN category c
+ON c.category_id = fc.category_id
+WHERE c.name IN (SELECT c.name
+		FROM category c
+		WHERE c.name IN ('Animation','Children','Classics','Comedy',
+						 'Family','Music'));
+---
+Q3.
+Provide a table with the family-friendly film category, each of
+the quartiles, and the corresponding count of movies within each
+combination of film category for each corresponding rental
+duration category.
+
+WITH t_family_quartile AS (SELECT f.title AS title, c.name AS name, f.rental_duration AS ren_dur,
+		NTILE(4) OVER ( ORDER BY f.rental_duration) AS standard_quartile
+		FROM film f
+		JOIN film_category fc
+		ON fc.film_id = f.film_id
+		JOIN category c
+		ON c.category_id = fc.category_id
+		WHERE c.name IN (SELECT c.name
+		FROM category c
+		WHERE c.name IN ('Animation','Children','Classics','Comedy',
+						 'Family','Music')))
+
+SELECT name, standard_quartile, COUNT(*)
+FROM t_family_quartile
+GROUP BY name, standard_quartile
+ORDER BY name, standard_quartile;
+---
+Q4.
+Can you write a query to capture the customer name, month and
+year of payment, and total payment amount for each month by
+these top 10 paying customers?
+We would like to know who were our top 10 paying customers,
+how many payments they made on a monthly basis during 2007,
+and what was the amount of the monthly payments
+
+SELECT
+c.first_name || ' ' || c.last_name AS fullname,
+DATE_TRUNC('month', p.payment_date) AS pay_month,
+SUM(p.amount) AS total_payments
+FROM customer c
+JOIN payment p
+ON c.customer_id = p.customer_id
+WHERE c.first_name || ' ' || c.last_name IN
+		(SELECT fullname FROM (SELECT c.first_name || ' ' || c.last_name AS fullname,
+		SUM(p.amount) AS tot_amount
+		FROM customer c
+		JOIN payment p
+		ON c.customer_id = p.customer_id
+		GROUP BY fullname
+		ORDER BY tot_amount DESC
+		LIMIT 10) top_10 )
+GROUP BY pay_month, fullname
+ORDER BY fullname, pay_month;
