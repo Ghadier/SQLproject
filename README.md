@@ -12,7 +12,8 @@ In this project, I will use SQL to explore a database related to movie rentals. 
 In this project, I will query the Sakila DVD Rental database. The Sakila Database holds information about a company that rents movie DVDs.
 
 ### Files used
-
+dvdrental
+dvd-rental-erd-2.png
 
 ### Credits
 https://www.postgresqltutorial.com/postgresql-sample-database/
